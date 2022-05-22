@@ -40,7 +40,7 @@ class AIBoard {
         }
         return sb.toString()
     }
-    // вывод позиции в псевдографическом виде для терминалки
+    // вывод позиции в псевдографическом виде (для терминалки)
     fun toPlan(): String {
         val sb = StringBuilder()
         sb.append("   a b c d e f g h\n")
@@ -58,8 +58,8 @@ class AIBoard {
     // инициализация позиции из строки с 32-мя символами (toString)
     private fun strToBoard(line: String) {
         if (line.length != 32) return
-        for (i in 0..31) {
-            squares[i] = when (line[i]) {
+        for (idx in 0..31) {
+            squares[idx] = when (line[idx]) {
                 '1' -> Kind.WHITE
                 '2' -> Kind.BLACK
                 '3' -> Kind.WHITE_KING
@@ -75,15 +75,15 @@ class AIBoard {
     // ----------------------
     // очистка доски от шашек
     private fun clear() {
-        for (i in 0..31) {
-            squares[i] = Kind.NONE
+        for (idx in 0..31) {
+            squares[idx] = Kind.NONE
         }
     }
     // --------------------------------
     // снятие с доски захваченных шашек
     fun clearCaptured() {
-        for (i in 0..31) {
-            if (squares[i] in Kind.WHITE_CAPTURED..Kind.BLACK_KING_CAPTURED) squares[i] = Kind.NONE
+        for (idx in 0..31) {
+            if (squares[idx] in Kind.WHITE_CAPTURED..Kind.BLACK_KING_CAPTURED) squares[idx] = Kind.NONE
         }
     }
     // ----------------------------------------------
@@ -100,16 +100,16 @@ class AIBoard {
             return
         }
         // если есть строка, то расстановка этюда
-        var c = Kind.NONE
+        var kind = Kind.NONE
         for (word in pos.split(",", " ", ";")) {
             when (word.trim()) {
-                "w" -> c = Kind.WHITE
-                "W" -> c = Kind.WHITE_KING
-                "b" -> c = Kind.BLACK
-                "B" -> c = Kind.BLACK_KING
+                "w" -> kind = Kind.WHITE
+                "W" -> kind = Kind.WHITE_KING
+                "b" -> kind = Kind.BLACK
+                "B" -> kind = Kind.BLACK_KING
                 else -> {
                     val i = nameToIdx(word)
-                    if (i in 0..31) squares[i] = c
+                    if (i in 0..31) squares[i] = kind
                 }
             }
         }
@@ -186,27 +186,27 @@ class AIBoard {
                 }
             }
         } else { // ходы чёрных
-            for (i in 0..31) {
-                val c = squares[i]
-                if (!c.isBlack) continue
-                val lst = getCapture(i)
+            for (idx in 0..31) {
+                val cell = squares[idx]
+                if (!cell.isBlack) continue
+                val lst = getCapture(idx)
                 if (lst.size > 0) {
                     if (!captureMode) {
                         captureMode = true
                         res.clear()
                     }
-                    res[nameCeil(i)] = lst
+                    res[nameCeil(idx)] = lst
                 }
                 if (captureMode) continue
-                res[nameCeil(i)] = lst
+                res[nameCeil(idx)] = lst
                 for (dir in 3 downTo 0) {
-                    var nxt = corners[i][dir]
+                    var nxt = corners[idx][dir]
                     while (nxt != -1 && squares[nxt].isFree) {
                         lst.add(nameCeil(nxt))
-                        if (c == Kind.BLACK) break // не дамка один шаг
+                        if (cell == Kind.BLACK) break // не дамка один шаг
                         nxt = corners[nxt][dir]
                     }
-                    if (dir == 2 && c == Kind.BLACK) break // не дамка только вперёд
+                    if (dir == 2 && cell == Kind.BLACK) break // не дамка только вперёд
                 }
             }
         }
@@ -222,21 +222,21 @@ class AIBoard {
         val idx = if (n in 0..31) n else -1
         val mv = getNextMoves(self)
         if (mv.isEmpty()) return res
-        for ((k, v) in mv.entries) {
-            val id = nameToIdx(k)
+        for ((cell, moves) in mv.entries) {
+            val id = nameToIdx(cell)
             if (id != idx) {
                 // клетка не выбрана, но неё есть ходы
                 res.add(Triple(id, -1, -1))
                 continue
             }
             // выбранная клетка
-            for (name in v) {
+            for (move in moves) {
                 //println(name)
-                if (name.substring(0, 1) == "x") {
-                    val cc = name.split(":", "->")
-                    res.add(Triple(idx, nameToIdx(cc[1]), nameToIdx(cc[0].substring(2, 4))))
+                if (move.substring(0, 1) == "x") {
+                    val cells = move.split(":", "->")
+                    res.add(Triple(idx, nameToIdx(cells[1]), nameToIdx(cells[0].substring(2, 4))))
                 } else {
-                    res.add(Triple(idx, nameToIdx(name), -1))
+                    res.add(Triple(idx, nameToIdx(move), -1))
                 }
             }
         }
@@ -483,14 +483,14 @@ class AIBoard {
         // -----------------------------------------
         // выполнить свой ход
         var mySqCur = n
-        for (mvs in move.split("->")) {
-            val cc = mvs.split(":")
-            if (cc.size == 2) {// взятие
-                moveChecker(Triple(mySqCur, nameToIdx(cc[1]), nameToIdx(cc[0].substring(2, 4))))
-                mySqCur = nameToIdx(cc[1])
+        for (subMove in move.split("->")) {
+            val myMove = subMove.split(":")
+            if (myMove.size == 2) {// взятие
+                moveChecker(Triple(mySqCur, nameToIdx(myMove[1]), nameToIdx(myMove[0].substring(2, 4))))
+                mySqCur = nameToIdx(myMove[1])
             } else { // простой ход
-                moveChecker(Triple(mySqCur, nameToIdx(cc[0]), -1))
-                mySqCur = nameToIdx(cc[0])
+                moveChecker(Triple(mySqCur, nameToIdx(myMove[0]), -1))
+                mySqCur = nameToIdx(myMove[0])
             }
         }
         clearCaptured() // убрать захваченные
@@ -505,32 +505,32 @@ class AIBoard {
             var eSqCur = eSq
             for (eMoveSq in eMoves) {
                 // выполняем ход(цепочку) проверяемой шашки противника
-                for (eMove in eMoveSq.split("->")) {
-                    val cc = eMove.split(":")
-                    if (cc.size == 2) {// взятие
-                        moveChecker(Triple(nameToIdx(eSqCur), nameToIdx(cc[1]), nameToIdx(cc[0].substring(2, 4))))
-                        eSqCur = cc[1]
+                for (eMoves in eMoveSq.split("->")) {
+                    val emove = eMoves.split(":")
+                    if (emove.size == 2) {// взятие
+                        moveChecker(Triple(nameToIdx(eSqCur), nameToIdx(emove[1]), nameToIdx(emove[0].substring(2, 4))))
+                        eSqCur = emove[1]
                     } else { // простой ход
-                        moveChecker(Triple(nameToIdx(eSqCur), nameToIdx(cc[0]), -1))
-                        eSqCur = cc[0]
+                        moveChecker(Triple(nameToIdx(eSqCur), nameToIdx(emove[0]), -1))
+                        eSqCur = emove[0]
                     }
                 }
                 // удаляем убитые шашки
                 clearCaptured()
                 // проверяем на достижение глубины
                 if (curDepth >= maxDepth) {
-                    val r = mul * score()
-                    if (r < rate) rate = r
+                    val locScore = mul * score()
+                    if (locScore < rate) rate = locScore
                 } else { // продолжаем поиск в глубину
                     // готовим список
                     var score = -100001 // будем искать лучший
                     // получаем свои возможные ходы в новой позиции
                     val myMoveSq = getNextMoves(self)
                     // перебираем наши шашки с возможными ходами
-                    for ((k, v) in myMoveSq.entries) {
-                        for (name in v) {
-                            val lvl = scoreOfMove(nameToIdx(k), name)
-                            if (lvl > score) score = lvl
+                    for ((startCell, moves) in myMoveSq.entries) {
+                        for (myMove in moves) {
+                            val locScore = scoreOfMove(nameToIdx(startCell), myMove)
+                            if (locScore > score) score = locScore
                         }
                     }
                     if (score == -100001) score = -100000 + curDepth
@@ -547,25 +547,25 @@ class AIBoard {
     // продумывание ходов указанного цвета
     fun getAIMoves(self: Kind): List<Triple<Int, Int, Int>> {
         val result = mutableListOf<Triple<Int, Int, Int>>()
-        val mv = getNextMoves(self)
-        if (mv.isEmpty()) return result
-        //val mul = if (self == Kind.WHITE) 1 else -1
+        val allMoves = getNextMoves(self)
+        if (allMoves.isEmpty()) return result
         val scoreList = mutableListOf<Triple<Int, String, String>>()
         // перебираем возможные ходы
         val thrList: ArrayList<Thread> = arrayListOf()
-        for ((k, v) in mv.entries) {
-            for (name in v) {
-                if (mv.size == 1 && v.size == 1) {// если один ход, то думать незачем
-                    scoreList.add(Triple(0, k, name))
+        for ((startCell, listCellMoves) in allMoves.entries) {
+            for (move in listCellMoves) {
+                if (allMoves.size == 1 && listCellMoves.size == 1) {
+                    // если возможен только один ход, то думать незачем
+                    scoreList.add(Triple(0, startCell, move))
                 } else {
                     // формирование потока для расчета
                     val thr = Thread { // Runnable
                         val threadBoard = AIBoard()
                         threadBoard.strToBoard(toString())
                         kotlin.run {
-                            val res = threadBoard.scoreOfMove(nameToIdx(k), name)
+                            val resScore = threadBoard.scoreOfMove(nameToIdx(startCell), move)
                             synchronized(scoreList) {
-                                scoreList.add(Triple(res, k, name))
+                                scoreList.add(Triple(resScore, startCell, move))
                             }
                         }
                     }
@@ -573,8 +573,6 @@ class AIBoard {
                     thr.start()
                     // занесение потока в список
                     thrList.add(thr)
-                    // вызов при однопоточном режиме
-                    //scoreList.add(Triple(scoreOfMove(nameToIdx(k), name), k, name))
                 }
             }
         }
@@ -583,17 +581,16 @@ class AIBoard {
             thr.join()
         }
         // ищем самый лучший ход
-        // println("$self $scoreList")
         val res = scoreList.maxBy { it.first }!!
         var mySq = res.second
         for (move in res.third.split("->")) {
-            val cc = move.split(":")
-            if (cc.size == 2) {// взятие
-                result.add(Triple(nameToIdx(mySq), nameToIdx(cc[1]), nameToIdx(cc[0].substring(2, 4))))
-                mySq = cc[1]
+            val cells = move.split(":")
+            if (cells.size == 2) {// взятие
+                result.add(Triple(nameToIdx(mySq), nameToIdx(cells[1]), nameToIdx(cells[0].substring(2, 4))))
+                mySq = cells[1]
             } else { // простой ход
-                result.add(Triple(nameToIdx(mySq), nameToIdx(cc[0]), -1))
-                mySq = cc[0]
+                result.add(Triple(nameToIdx(mySq), nameToIdx(cells[0]), -1))
+                mySq = cells[0]
             }
         }
         return result
@@ -654,55 +651,3 @@ class AIBoard {
         }
     }
 }
-
-object AICheckers {
-    @JvmStatic
-    fun main(args: Array<String>) {
-        val brd = AIBoard()
-        //for (i in 0..31) print(" " + AIBoard.nameCeil(i))
-        //println()
-        brd.setBoard("")
-        println(brd)
-        //System.out.println(brd.toPlan());
-        //1. ed4 с:g5 2. de5 f:d4 3. gh4 е:gЗ 4. h:h4.
-//        brd.setBoard("w,F2,E3,G3,F4;b,F8,H8,C7,E7,G7,F6,H6;B,C1,E1");
-        //1. bс5 g:а7 2. cd4 а:g1 3. de3 g:а1 4. аb4 а:сЗ 5. cb2 cd2 6 е:сЗ.
-        //brd.setBoard("w,A3,B2,B4,C1,C3,D2,E1;b,A5;B,G1")
-        //brd.setBoard("w,B6;b,C7,F6;B,D2");
-        println(brd.toPlan())
-        for (i in 0..40) {
-            println("$i White move")
-            var mm = brd.getAIMoves(Kind.WHITE)
-            if (mm.isEmpty()) {
-                println("Black win!")
-                break
-            }
-            println("W $mm")
-            for (move in mm) {
-                brd.moveChecker(move)
-            }
-            brd.clearCaptured()
-            println(brd.toPlan())
-            println(brd.score())
-            println("$i Black move")
-            mm = brd.getAIMoves(Kind.BLACK)
-            if (mm.isEmpty()) {
-                println("White win!")
-                break
-            }
-            println("B $mm")
-            for (move in mm) {
-                brd.moveChecker(move)
-            }
-            brd.clearCaptured()
-            println(brd.toPlan())
-            println(brd.score())
-        }
-
-        //println(brd.getNextMoves(Kind.WHITE))
-        //println(brd.getNextMoves(Kind.BLACK))
-        //println(brd.getCapture(nameToIdx("B6")));
-        //System.out.println(brd.getCapture(Board.nameToIdx("D2")));
-    }
-}
-/* */

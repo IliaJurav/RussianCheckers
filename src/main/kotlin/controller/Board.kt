@@ -332,7 +332,6 @@ class Board : View() {
         when(abs(num)){
             1-> ai.setBoard("B,C1,E1;w,F2,E3,G3,F4;b,F8,H8,C7,E7,G7,F6,H6")
             2-> ai.setBoard("W,B3,G1,H2,H6;B,A1,A7")
-            // http://shashkinn.ru/uroki-shashek/zadachi-po-russkim-shashkam/
             3-> ai.setBoard("w,G1,H2;W,b8;b,D4,F6")
             4-> ai.setBoard("w,E1,G1,A5,F6;b,H2,F4,A7,F8,H8")
             5-> ai.setBoard("w,A1,B2,C1,G1,H2;b,A5,B4,E3,F2,H4")

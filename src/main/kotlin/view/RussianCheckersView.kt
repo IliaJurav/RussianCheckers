@@ -3,6 +3,9 @@ package view
 import javafx.geometry.Pos
 import javafx.scene.text.TextAlignment
 import controller.*
+import javafx.scene.control.Alert
+import javafx.scene.control.ButtonBar
+import javafx.scene.control.ButtonType
 import tornadofx.*
 import kotlin.system.exitProcess
 
@@ -29,12 +32,35 @@ class RussianCheckersView : View() {
                     }
                 }
                 separator()
+                item("About") {
+                    setOnAction { about() }
+                }
+                separator()
                 item("Exit") {
                     setOnAction { exitProcess(0) }
                 }
             }
         }
         center = board.root
+    }
+
+    private fun about(){
+        val alert = Alert(Alert.AlertType.INFORMATION)
+        alert.title = "About"
+        alert.isResizable = false
+        alert.headerText = """
+This program was written as part of a course project 
+on practical work on the "Algorithms and data structures".
+
+   student - Ilya Zhuravsky
+   curator - Mikhail Belyaev
+
+Institute of Computer Science and Technology,
+Peter the Great St. Petersburg Polytechnic University
+        """.trimIndent()
+        val buttonOk = ButtonType("Ok", ButtonBar.ButtonData.OK_DONE)
+        alert.buttonTypes.setAll(buttonOk)
+        alert.showAndWait()
     }
 
     init {
@@ -67,7 +93,7 @@ class GameOverWindow : Fragment() {
                 text = " Restart "
                 style = "-fx-font-size: 20"
                 imageview{
-                    fitHeight = 25.0 //this@button.height
+                    fitHeight = 25.0
                     fitWidth = 25.0
                     image = resources.image("/reset.png")
                 }
@@ -82,7 +108,7 @@ class GameOverWindow : Fragment() {
             button {
                 text = "  Exit  "
                 imageview{
-                        fitHeight = 25.0 //this@button.height
+                        fitHeight = 25.0
                         fitWidth = 25.0
                         image = resources.image("/exit.png")
                     }
