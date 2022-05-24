@@ -505,8 +505,8 @@ class AIBoard {
             var eSqCur = eSq
             for (eMoveSq in eMoves) {
                 // выполняем ход(цепочку) проверяемой шашки противника
-                for (eMoves in eMoveSq.split("->")) {
-                    val emove = eMoves.split(":")
+                for (emoves in eMoveSq.split("->")) {
+                    val emove = emoves.split(":")
                     if (emove.size == 2) {// взятие
                         moveChecker(Triple(nameToIdx(eSqCur), nameToIdx(emove[1]), nameToIdx(emove[0].substring(2, 4))))
                         eSqCur = emove[1]
@@ -530,9 +530,11 @@ class AIBoard {
                     for ((startCell, moves) in myMoveSq.entries) {
                         for (myMove in moves) {
                             val locScore = scoreOfMove(nameToIdx(startCell), myMove)
+                            // выбираем наш лучший исход, мы его делаем сами
                             if (locScore > score) score = locScore
                         }
                     }
+                    // выбираем наихудший вариант, как наиболее вероятный от противника
                     if (score == -100001) score = -100000 + curDepth
                     if (score < rate) rate = score
                 }
@@ -570,6 +572,8 @@ class AIBoard {
                         }
                     }
                     // запуск потока для расчета
+                    thr.isDaemon = true
+                    thr.priority = 4
                     thr.start()
                     // занесение потока в список
                     thrList.add(thr)

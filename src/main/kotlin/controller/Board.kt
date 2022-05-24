@@ -28,13 +28,23 @@ class Board : View() {
     private lateinit var imageWhitePlayer: ImageView
     private lateinit var imageBlackPlayer: ImageView
     // поля для анимации
-    private var stepAni = -1
+    private var processedAnimation = false
     // собственно аниматор
     private var aiAnimation: AnimationTimer = object : AnimationTimer() {
         private var timAni: Long = 0
         private var thrUIMove = mutableListOf<Triple<Int, Int, Int>>()
         private var subStepAni = 0
         private val delayAni: Long = 250_000_000 // 250 мсек
+        private var stepAni = -1
+        override fun start() {
+            super.start()
+            processedAnimation = true
+            stepAni = 0
+        }
+        override fun stop() {
+            super.stop()
+            processedAnimation = false
+        }
         override fun handle(now: Long) {
             if ((timAni - now) in 0..delayAni) return
             timAni = now + delayAni
@@ -134,12 +144,10 @@ class Board : View() {
                     }
                     // нарисовать изменения
                     updateBoard()
-                    stepAni = -1
                     stop()
                 }
                 //------------------------------------------
                 else -> {// заглушка
-                    stepAni = -1
                     stop()
                 }
             }
@@ -314,7 +322,6 @@ class Board : View() {
         // если начинает робот, то запустить AI
         if (sideAI == sideMove) {
             //timAni = System.nanoTime()
-            stepAni = 0
             aiAnimation.start()
         }
     }
@@ -324,8 +331,7 @@ class Board : View() {
         if (num > 0) {
             if (ai.toString() != "11111111111100000000222222222222") return
         }
-        if(stepAni!=-1){
-            stepAni = -1
+        if(processedAnimation){
             aiAnimation.stop()
         }
         // этюды
@@ -347,8 +353,7 @@ class Board : View() {
     }
 
     fun newGame() { // новая игра - начальная расстановка
-        if(stepAni!=-1){
-            stepAni = -1
+        if(processedAnimation){
             aiAnimation.stop()
         }
         ai.setBoard("")
@@ -360,8 +365,7 @@ class Board : View() {
     }
 
     fun changeWhite() {
-        if(stepAni!=-1){
-            stepAni = -1
+        if(processedAnimation){
             aiAnimation.stop()
         }
         if (sideAI == Kind.WHITE) {
@@ -378,8 +382,7 @@ class Board : View() {
     }
 
     fun changeBlack() {
-        if(stepAni!=-1){
-            stepAni = -1
+        if(processedAnimation){
             aiAnimation.stop()
         }
         if (sideAI == Kind.BLACK) {
@@ -398,7 +401,7 @@ class Board : View() {
     // кликнули по клетке
     private fun selectCell(idx_click: Int) {
         // работает интеллект - не вмешиваться
-        if(stepAni != -1) return
+        if(processedAnimation) return
         // проверить выбран ли доступный ход
         val moveCell = moveCells.filter { it.second == idx_click }
         //
